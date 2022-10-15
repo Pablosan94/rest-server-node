@@ -24,15 +24,21 @@ class Server {
     });
 
     this.server.post('/api', (req, res) => {
-      res.send('Hello World');
+      res.json({
+        msg: 'post API',
+      });
     });
 
     this.server.put('/api', (req, res) => {
-      res.send('Hello World');
+      res.json({
+        msg: 'put API',
+      });
     });
 
     this.server.delete('/api', (req, res) => {
-      res.send('Hello World');
+      res.json({
+        msg: 'delete API',
+      });
     });
   }
 
