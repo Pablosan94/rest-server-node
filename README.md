@@ -2,7 +2,7 @@
 REST server backend implemented with NodeJS + Express.
 
 ## Run the server
-In order to run the backend server, run the following commands:
+In order to run the backend server, adjust the environment values inside `.env.template` and rename to `.env`. Then, run the following commands:
 ```
 npm install
 ```
