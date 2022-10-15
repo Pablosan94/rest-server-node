@@ -1,6 +1,7 @@
 const { request, response } = require('express');
 const bcryptjs = require('bcryptjs');
 const User = require('../models/user');
+const { findByIdAndUpdate } = require('../models/user');
 
 const getUser = (req = request, res = response) => {
   const { id } = req.params;
@@ -11,23 +12,20 @@ const getUser = (req = request, res = response) => {
   });
 };
 
-const getUsers = (req = request, res = response) => {
-  res.json({
-    msg: 'get all users - controller',
-  });
+const getUsers = async (req = request, res = response) => {
+  const { limit = 5, from = 0 } = req.query;
+
+  const [total, users] = await Promise.all([
+    User.countDocuments({ enabled: true }),
+    User.find({ enabled: true }).skip(parseInt(from)).limit(parseInt(limit)),
+  ]);
+
+  res.json({ total, users });
 };
 
 const createUser = async (req = request, res = response) => {
   const { name, email, password, role } = req.body;
   const user = new User({ name, email, password, role });
-
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    return res.status(400).json({
-      status: 'Bad Request',
-      message: 'Email already in use',
-    });
-  }
 
   const salt = bcryptjs.genSaltSync();
   user.password = bcryptjs.hashSync(password, salt);
@@ -41,38 +39,33 @@ const createUser = async (req = request, res = response) => {
   res.json(user);
 };
 
-const updateFullUser = (req = request, res = response) => {
+const updateUser = async (req = request, res = response) => {
   const { id } = req.params;
+  const { _id, password, google, ...body } = req.body;
 
-  res.json({
-    msg: 'put user - controller',
-    id,
-  });
+  if (password) {
+    const salt = bcryptjs.genSaltSync();
+    body.password = bcryptjs.hashSync(password, salt);
+  }
+
+  const user = await User.findByIdAndUpdate(id, body);
+
+  res.json(user);
 };
 
-const updatePartialUser = (req = request, res = response) => {
+const deleteUser = async (req = request, res = response) => {
   const { id } = req.params;
 
-  res.json({
-    msg: 'patch user - controller',
-    id,
-  });
-};
+  // const user = await User.findByIdAndDelete(id);
+  const user = await User.findByIdAndUpdate(id, { enabled: false });
 
-const deleteUser = (req = request, res = response) => {
-  const { id } = req.params;
-
-  res.json({
-    msg: 'delete user - controller',
-    id,
-  });
+  res.json(user);
 };
 
 module.exports = {
   getUser,
   getUsers,
   createUser,
-  updateFullUser,
-  updatePartialUser,
+  updateUser,
   deleteUser,
 };

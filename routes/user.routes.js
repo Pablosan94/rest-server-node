@@ -4,12 +4,15 @@ const {
   getUser,
   getUsers,
   createUser,
-  updateFullUser,
-  updatePartialUser,
+  updateUser,
   deleteUser,
 } = require('../controllers/user.controller');
 const userValidation = require('../middlewares/user.validation');
-const Role = require('../models/role');
+const {
+  emailExists,
+  isRoleValid,
+  userIdExists,
+} = require('../helpers/db-validators');
 
 const router = Router();
 
@@ -22,25 +25,36 @@ router.post(
   [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Email is not valid or missing').isEmail().not().isEmpty(),
+    check('email').custom(emailExists),
     check('password', 'Password is required').not().isEmpty(),
     check('password', 'Password needs 6 characters at minimum').isLength({
       min: 6,
     }),
-    check('role', 'Role is not valid').custom(async (role = '') => {
-      const roleExists = await Role.findOne({ role });
-      if (!roleExists) {
-        throw new Error(`Role ${role} is not valid`);
-      }
-    }),
+    check('role').custom(isRoleValid),
     userValidation,
   ],
   createUser
 );
 
-router.put('/:id', updateFullUser);
+router.patch(
+  '/:id',
+  [
+    check('id', 'Invalid ID').isMongoId(),
+    check('id').custom(userIdExists),
+    check('role').custom(isRoleValid),
+    userValidation,
+  ],
+  updateUser
+);
 
-router.patch('/:id', updatePartialUser);
-
-router.delete('/:id', deleteUser);
+router.delete(
+  '/:id',
+  [
+    check('id', 'Invalid ID').isMongoId(),
+    check('id').custom(userIdExists),
+    userValidation,
+  ],
+  deleteUser
+);
 
 module.exports = router;
