@@ -13,6 +13,8 @@ const {
   isRoleValid,
   userIdExists,
 } = require('../helpers/db-validators');
+const { validateJWT } = require('../middlewares/jwt.validation');
+const { hasRole } = require('../middlewares/role.validation');
 
 const router = Router();
 
@@ -50,6 +52,8 @@ router.patch(
 router.delete(
   '/:id',
   [
+    validateJWT,
+    hasRole('ADMIN'),
     check('id', 'Invalid ID').isMongoId(),
     check('id').custom(userIdExists),
     userValidation,
